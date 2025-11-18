@@ -34,18 +34,18 @@ class ItemDeleteResponse(BaseModel):
     remaining_items_count: int
 
 @app.get("/")
-def home():
+async def home():
     return {"message" : "Welcome to the Randomizer API"}
 
 @app.get("/random/{max_value}")
-def get_random_number(max_value: int):
+async def get_random_number(max_value: int):
     return {
             "max" : max_value,
             "random_number": random.randint(1, max_value)
             }
 
 @app.post("/items", response_model=ItemResponse)
-def add_item(item: Item):
+async def add_item(item: Item):
     if item.name in items_db:
         raise HTTPException(status_code=400, detail="Item already exists")
 
@@ -66,7 +66,7 @@ def get_randomized_items():
         )
 
 @app.put("/items/{update_item_name}", response_model=ItemUpdateResponse)
-def update_item(updated_item_name: str, item: Item):
+async def update_item(updated_item_name: str, item: Item):
     if update_item_name not in items_db:
         raise HTTPException(status_code=404, detail="Item not found")
 
@@ -86,7 +86,7 @@ def update_item(updated_item_name: str, item: Item):
         ) 
 
 @app.delete("/items/{item}", response_model=ItemDeleteResponse)
-def delete_item(item: str):
+async def delete_item(item: str):
     if item not in items_db:
         raise HTTPExepction(status_code=404, detail="Item not found")
 
@@ -100,7 +100,7 @@ def delete_item(item: str):
 
 
 @app.get("/random-between")
-def get_random_number_between(
+async def get_random_number_between(
         min_value: Annotated[int, Query(
             title="Minimum Value",
             description="The minimum random number",
