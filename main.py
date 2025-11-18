@@ -1,9 +1,35 @@
 from fastapi import FastAPI, Query
+from fastapi.middleware.cors import CORSMiddleware
+
 from pydantic import BaseModel, Field
 from typing import Annotated
 import random
 
-app = FastAPI()
+tags_metadata = [
+    {
+        "name": "Random Playground",
+        "description": "Generate random numbers",
+    },
+    {
+        "name": "Random Items Management",
+        "description": "Create, shuffle, read, update and delete items",
+    },
+]
+
+app = FastAPI(
+    title="Randomizer API",
+    description="Shuffle lists, pick random items, and generate random numbers",
+    version="1.0.0",
+    openapi_tags=tags_metadata,
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:15213", "https://example.com"],
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "DELETE"],
+    allow_headers=["*"],
+)
 
 items_db = []
 
@@ -33,7 +59,7 @@ class ItemDeleteResponse(BaseModel):
     deleted_item: str
     remaining_items_count: int
 
-@app.get("/")
+@app.get("/", tags=["Random Playground"])
 async def home():
     return {"message" : "Welcome to the Randomizer API"}
 
