@@ -14,6 +14,25 @@ class Item(BaseModel):
         description="The item name" 
     )
 
+class ItemResponse(BaseModel):
+    message: str
+    item: str
+
+class ItemListResponse(BaseModel):
+    original_order: list[str]
+    randomized_order: list[str]
+    count: int
+
+class ItemUpdateResponse(BaseModel):
+    message: str
+    old_item: str
+    new_item: str
+
+class ItemDeleteResponse(BaseModel):
+    message: str
+    deleted_item: str
+    remaining_items_count: int
+
 @app.get("/")
 def home():
     return {"message" : "Welcome to the Randomizer API"}
@@ -25,25 +44,28 @@ def get_random_number(max_value: int):
             "random_number": random.randint(1, max_value)
             }
 
-@app.post("/items")
+@app.post("/items", response_model=ItemResponse)
 def add_item(item: Item):
     if item.name in items_db:
         raise HTTPException(status_code=400, detail="Item already exists")
 
-    items_db.append(item_name)
-    return {"message": "Item added successfully", "item": item.name}
+    items_db.append(item.name)
+    return ItemResponse(
+            message="Item added successfully",
+            item=item.name
+        )
 
-@app.get("/items")
+@app.get("/items", response_model=ItemListResponse)
 def get_randomized_items():
     randomized = items_db.copy()
     random.shuffle(randomized)
-    return {
-            "original_order": items_db,
-            "randomized_order": randomized,
-            "count": len(items_db)
-            }
+    return ItemListResponse(
+            original_order=items_db,
+            randomized_order=randomized,
+            count=len(items_db)
+        )
 
-@app.put("/items/{update_item_name}")
+@app.put("/items/{update_item_name}", response_model=ItemUpdateResponse)
 def update_item(updated_item_name: str, item: Item):
     if update_item_name not in items_db:
         raise HTTPException(status_code=404, detail="Item not found")
@@ -57,24 +79,24 @@ def update_item(updated_item_name: str, item: Item):
     index = items_db.index(update_item_name)
     items_db[index] = item.name
 
-    return {
-        "message": "Item updated successfully",
-        "old_item": update_item_name,
-        "new_item": item.name
-    }
+    return ItemUpdateRespnse(
+        message="Item updated successfully",
+        old_item=update_item_name,
+        new_item=item.name
+        ) 
 
-@app.delete("/items/{item}")
+@app.delete("/items/{item}", response_model=ItemDeleteResponse)
 def delete_item(item: str):
     if item not in items_db:
         raise HTTPExepction(status_code=404, detail="Item not found")
 
     items_db.remove(item)
 
-    return {
-            "message": "Item deleted successfully",
-            "deleted_item": item,
-            "remaining_items_count": len(items_db)
-            }
+    return ItemDeleteResponse(
+            message="Item deleted successfully",
+            deleted_item=item,
+            remaining_items_count=len(items_db)
+            )
 
 
 @app.get("/random-between")
