@@ -1,10 +1,18 @@
 from fastapi import FastAPI, Query
+from pydantic import BaseModel, Field
 from typing import Annotated
 import random
 
 app = FastAPI()
 
 items_db = []
+
+class Item(BaseModel):
+    name: str = Field(
+        min_length=1,
+        max_length=100,
+        description="The item name" 
+    )
 
 @app.get("/")
 def home():
@@ -18,15 +26,12 @@ def get_random_number(max_value: int):
             }
 
 @app.post("/items")
-def add_item(body: dict):
-    item_name = body.get("name")
-    if not item_name:
-        raise HTTPException(status_code=400, detail="'name' field is rqeuired")
-    if item_name in items_db:
+def add_item(item: Item):
+    if item.name in items_db:
         raise HTTPException(status_code=400, detail="Item already exists")
 
     items_db.append(item_name)
-    return {"message": "Item added successfully", "item": item_name}
+    return {"message": "Item added successfully", "item": item.name}
 
 @app.get("/items")
 def get_randomized_items():
@@ -39,30 +44,23 @@ def get_randomized_items():
             }
 
 @app.put("/items/{update_item_name}")
-def update_item(update_item_name: str, body: dict):
+def update_item(updated_item_name: str, item: Item):
     if update_item_name not in items_db:
         raise HTTPException(status_code=404, detail="Item not found")
 
-    new_name = body.get("name")
-    if not new_name:
-        raise HTTPException(
-                status_code=400,
-                detail="'name' field is required in request body"
-        )
-
-    if new_name in items_db:
+    if item.name in items_db:
         raise HTTPException(
                 status_code=409,
                 detail="An item with that name already exists"
         )
 
     index = items_db.index(update_item_name)
-    items_db[index] = new_name
+    items_db[index] = item.name
 
     return {
         "message": "Item updated successfully",
         "old_item": update_item_name,
-        "new_item": new_name
+        "new_item": item.name
     }
 
 @app.delete("/items/{item}")
